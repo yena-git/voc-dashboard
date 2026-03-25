@@ -40,11 +40,11 @@
   }
   .refresh-btn:hover { background: rgba(255,255,255,0.3); }
   .refresh-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-  .refresh-icon { display: inline-block; transition: transform 0.5s; }
+  .refresh-icon { display: inline-block; }
   .refresh-btn.spinning .refresh-icon { animation: spin 0.8s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  /* ─── Loading / Error overlay ─── */
+  /* ─── Status bar ─── */
   .status-bar {
     display: none;
     align-items: center;
@@ -60,533 +60,699 @@
   .status-bar.error { background: #ffebee; border-color: #ef9a9a; color: #c62828; }
   .status-bar.visible { display: flex; }
 
-  /* ─── Main layout ─── */
+  /* ─── Main ─── */
   main { max-width: 1200px; margin: 0 auto; padding: 32px 24px; }
 
-  /* ─── Tabs ─── */
-  .tabs {
+  /* ─── View tabs ─── */
+  .view-tabs {
     display: flex;
     gap: 8px;
-    border-bottom: 2px solid #e5e7eb;
-    margin-bottom: 32px;
-    overflow-x: auto;
+    margin-bottom: 28px;
   }
-  .tab {
-    padding: 12px 20px;
-    background: none;
-    border: none;
-    border-bottom: 3px solid transparent;
-    color: #6b7280;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s;
-    white-space: nowrap;
-  }
-  .tab:hover { color: #667eea; }
-  .tab.active {
-    color: #667eea;
-    border-bottom-color: #667eea;
-  }
-
-  /* ─── Tab Content ─── */
-  .tab-content {
-    display: none;
-  }
-  .tab-content.active {
-    display: block;
-  }
-
-  /* ─── Cards ─── */
-  .card-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 20px;
-    margin-bottom: 32px;
-  }
-
-  .card {
+  .view-tab {
     background: white;
-    border-radius: 12px;
-    padding: 20px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-    transition: all 0.2s;
-  }
-  .card:hover {
-    box-shadow: 0 8px 16px rgba(0,0,0,0.12);
-    transform: translateY(-2px);
-  }
-
-  .card-header {
-    display: flex;
-    align-items: start;
-    justify-content: space-between;
-    margin-bottom: 12px;
-  }
-
-  .card-title {
-    font-size: 15px;
+    border: 2px solid #e0e0e0;
+    border-radius: 24px;
+    padding: 8px 22px;
+    font-size: 14px;
     font-weight: 600;
-    color: #1a1a2e;
-    flex: 1;
-    word-break: break-word;
+    cursor: pointer;
+    color: #666;
+    font-family: inherit;
+    transition: all 0.15s;
+  }
+  .view-tab:hover { border-color: #667eea; color: #667eea; }
+  .view-tab.active {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-color: transparent;
+    color: white;
+    box-shadow: 0 4px 12px rgba(102,126,234,0.35);
   }
 
-  .card-meta {
+  /* ─── Summary Cards ─── */
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+  .summary-card {
+    background: white;
+    border-radius: 16px;
+    padding: 24px 28px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    border-top: 4px solid transparent;
+    transition: transform 0.15s;
+  }
+  .summary-card:hover { transform: translateY(-2px); }
+  .summary-card.total    { border-top-color: #667eea; }
+  .summary-card.customer { border-top-color: #43b97f; }
+  .summary-card.seller   { border-top-color: #f7931e; }
+  .card-label { font-size: 13px; color: #888; font-weight: 500; }
+  .card-value { font-size: 42px; font-weight: 800; line-height: 1; }
+  .total    .card-value { color: #667eea; }
+  .customer .card-value { color: #43b97f; }
+  .seller   .card-value { color: #f7931e; }
+  .card-sub { font-size: 12px; color: #aaa; }
+
+  /* ─── Filter bar ─── */
+  .filter-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .filter-bar span { font-size: 13px; color: #666; font-weight: 500; }
+  .filter-btn {
+    background: white;
+    border: 1.5px solid #e0e0e0;
+    border-radius: 20px;
+    padding: 5px 14px;
+    font-size: 12px;
+    cursor: pointer;
+    color: #555;
+    transition: all 0.15s;
+    font-family: inherit;
+  }
+  .filter-btn:hover { border-color: #667eea; color: #667eea; }
+  .filter-btn.active {
+    background: #667eea;
+    border-color: #667eea;
+    color: white;
+    font-weight: 600;
+  }
+
+  /* ─── Content grid ─── */
+  .content-grid {
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    gap: 20px;
+    align-items: start;
+  }
+
+  /* ─── Panel ─── */
+  .panel {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    overflow: hidden;
+  }
+  .panel-header {
+    padding: 18px 22px 14px;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 14px;
+    font-weight: 700;
+    color: #333;
     display: flex;
     align-items: center;
     gap: 8px;
-    margin-top: 10px;
-    font-size: 12px;
-    color: #9ca3af;
   }
-
-  .card-meta > span:first-child {
-    color: #667eea;
+  .panel-header .badge {
+    background: #f0f0f0;
+    border-radius: 20px;
+    padding: 2px 10px;
+    font-size: 11px;
+    color: #888;
     font-weight: 500;
   }
 
-  .tag {
-    display: inline-block;
-    padding: 4px 10px;
-    background: #f0f4ff;
-    color: #667eea;
-    border-radius: 12px;
-    font-size: 12px;
-    font-weight: 500;
-    margin-top: 8px;
+  /* ─── Type rows ─── */
+  .type-list { padding: 10px 0; }
+  .type-row {
+    padding: 10px 22px;
+    cursor: pointer;
+    transition: background 0.12s;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-left: 3px solid transparent;
   }
-
-  .tag.resolved { background: #e8f5e9; color: #2e7d32; }
-  .tag.wip { background: #fff3e0; color: #e65100; }
-  .tag.todo { background: #f3e5f5; color: #6a1b9a; }
-
-  /* ─── Table ─── */
-  .table-wrapper {
-    background: white;
-    border-radius: 12px;
+  .type-row:hover { background: #f7f8ff; }
+  .type-row.active { background: #f0f3ff; border-left-color: #667eea; }
+  .type-bar-wrap { flex: 1; }
+  .type-name {
+    font-size: 12.5px;
+    color: #444;
+    font-weight: 500;
+    margin-bottom: 5px;
+    white-space: nowrap;
     overflow: hidden;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    text-overflow: ellipsis;
+    max-width: 230px;
+  }
+  .type-row.active .type-name { color: #667eea; font-weight: 600; }
+  .bar-track { background: #f0f0f0; border-radius: 4px; height: 6px; overflow: hidden; }
+  .bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    background: linear-gradient(90deg, #667eea, #9b59b6);
+    transition: width 0.4s cubic-bezier(0.4,0,0.2,1);
+  }
+  .type-count { font-size: 18px; font-weight: 800; color: #667eea; min-width: 26px; text-align: right; }
+
+  /* ─── VOC list ─── */
+  .voc-header-info {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 22px 14px;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  .voc-title { font-size: 14px; font-weight: 700; color: #333; }
+  .voc-count-badge {
+    background: #667eea;
+    color: white;
+    border-radius: 20px;
+    padding: 3px 12px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .voc-list { padding: 8px 0; max-height: 600px; overflow-y: auto; }
+  .voc-item {
+    padding: 14px 22px;
+    border-bottom: 1px solid #f7f7f7;
+    cursor: pointer;
+    transition: background 0.1s;
+  }
+  .voc-item:last-child { border-bottom: none; }
+  .voc-item:hover { background: #f9f9ff; }
+  .voc-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
+  .tag { font-size: 11px; border-radius: 4px; padding: 2px 8px; font-weight: 600; }
+  .tag-gubun-customer { background: #e8f8f0; color: #2e9e6b; }
+  .tag-gubun-seller   { background: #fff3e0; color: #d0760c; }
+  .tag-date  { background: #f0f0f0; color: #777; }
+  .tag-num   { color: #aaa; font-size: 11px; }
+  .voc-content {
+    font-size: 13px;
+    color: #444;
+    line-height: 1.6;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .voc-item.expanded .voc-content { display: block; -webkit-line-clamp: unset; }
+
+  /* ─── Empty state ─── */
+  .empty-state { text-align: center; padding: 60px 20px; color: #bbb; }
+  .empty-state .icon { font-size: 40px; margin-bottom: 12px; }
+  .empty-state p { font-size: 14px; }
+
+  /* ─── Scrollbar ─── */
+  .voc-list::-webkit-scrollbar { width: 4px; }
+  .voc-list::-webkit-scrollbar-track { background: #f5f5f5; }
+  .voc-list::-webkit-scrollbar-thumb { background: #ddd; border-radius: 4px; }
+
+  /* ═══════════════════════════════════
+     PLAN VIEW
+  ═══════════════════════════════════ */
+  #plan-view { display: none; }
+
+  /* Plan stats */
+  .plan-stats {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+  .plan-stat {
+    background: white;
+    border-radius: 14px;
+    padding: 18px 24px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: all 0.15s;
+    min-width: 120px;
+  }
+  .plan-stat:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
+  .plan-stat-label { font-size: 12px; color: #888; font-weight: 500; margin-bottom: 6px; }
+  .plan-stat-value { font-size: 32px; font-weight: 800; }
+  .plan-stat.stat-all    .plan-stat-value { color: #764ba2; }
+  .plan-stat.stat-deploy .plan-stat-value { color: #1d8a56; }
+  .plan-stat.stat-review .plan-stat-value { color: #b07a00; }
+  .plan-stat.stat-hold   .plan-stat-value { color: #aaa; }
+  .plan-stat.stat-all.active    { border-color: #764ba2; background: #f8f4ff; }
+  .plan-stat.stat-deploy.active { border-color: #1d8a56; background: #f0fbf5; }
+  .plan-stat.stat-review.active { border-color: #b07a00; background: #fffbf0; }
+  .plan-stat.stat-hold.active   { border-color: #bbb;    background: #f5f5f5; }
+
+  /* Plan table */
+  .plan-panel {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    overflow: hidden;
+  }
+  .plan-panel-header {
+    padding: 18px 24px 14px;
+    border-bottom: 1px solid #f0f0f0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .plan-panel-title { font-size: 14px; font-weight: 700; color: #333; }
+  .plan-count-badge {
+    background: #764ba2;
+    color: white;
+    border-radius: 20px;
+    padding: 3px 12px;
+    font-size: 12px;
+    font-weight: 600;
   }
 
-  table {
+  .plan-table-wrap { overflow-x: auto; }
+  .plan-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 14px;
+    font-size: 13px;
   }
-
-  table th {
-    background: #f9fafb;
-    padding: 14px;
+  .plan-table thead th {
+    background: #f8f7ff;
+    padding: 11px 16px;
     text-align: left;
-    font-weight: 600;
-    color: #374151;
-    border-bottom: 2px solid #e5e7eb;
-  }
-
-  table td {
-    padding: 14px;
-    border-bottom: 1px solid #f3f4f6;
-  }
-
-  table tbody tr:hover { background: #fafbfc; }
-
-  table a {
-    color: #667eea;
-    text-decoration: none;
-  }
-  table a:hover { text-decoration: underline; }
-
-  /* ─── Badge ─── */
-  .badge {
-    display: inline-block;
-    padding: 4px 10px;
-    border-radius: 6px;
     font-size: 12px;
-    font-weight: 500;
+    font-weight: 700;
+    color: #666;
+    border-bottom: 1px solid #eee;
+    white-space: nowrap;
   }
+  .plan-table tbody tr { border-bottom: 1px solid #f5f5f5; transition: background 0.1s; }
+  .plan-table tbody tr:last-child { border-bottom: none; }
+  .plan-table tbody tr:hover { background: #faf9ff; }
+  .plan-table tbody td { padding: 13px 16px; vertical-align: top; color: #333; line-height: 1.55; }
+  .plan-table td.cat-cell { font-weight: 600; color: #555; white-space: nowrap; font-size: 12.5px; }
+  .plan-table td.note-cell { color: #777; font-size: 12px; }
 
-  .badge.dev { background: #e0e7ff; color: #4c1d95; }
-  .badge.prod { background: #dbeafe; color: #0c2340; }
-  .badge.staging { background: #fef3c7; color: #78350f; }
+  /* Dev status badge */
+  .dev-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .dev-badge.deployed  { background: #e8f8f0; color: #1d8a56; }
+  .dev-badge.reviewing { background: #fff8e1; color: #b07a00; }
+  .dev-badge.hold      { background: #f0f0f0; color: #888; }
+  .dev-badge.unknown   { background: #f5f5f5; color: #aaa; }
 
-  /* ─── Jira Button ─── */
+  /* Jira button */
   .jira-btn {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    padding: 6px 12px;
+    gap: 5px;
     background: #0052cc;
     color: white;
-    border: none;
-    border-radius: 4px;
-    font-size: 12px;
-    font-weight: 500;
-    cursor: pointer;
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 11.5px;
+    font-weight: 700;
     text-decoration: none;
-    transition: background 0.2s;
+    transition: background 0.15s, transform 0.1s;
+    white-space: nowrap;
   }
-  .jira-btn:hover { background: #003fa2; }
+  .jira-btn:hover { background: #0041a8; transform: translateY(-1px); }
 
-  /* ─── Empty State ─── */
-  .empty-state {
-    text-align: center;
-    padding: 60px 20px;
-    color: #9ca3af;
-  }
-
-  .empty-state-icon {
-    font-size: 48px;
-    margin-bottom: 16px;
-  }
-
-  .empty-state h3 {
-    font-size: 16px;
-    font-weight: 600;
-    color: #6b7280;
-    margin-bottom: 8px;
-  }
-
-  .empty-state p {
-    font-size: 14px;
-    color: #9ca3af;
-  }
-
-  /* ─── Responsive ─── */
   @media (max-width: 768px) {
-    main { padding: 16px 12px; }
-    .tabs { margin-bottom: 20px; }
-    .card-grid { grid-template-columns: 1fr; }
+    .summary-grid { grid-template-columns: 1fr; }
+    .content-grid { grid-template-columns: 1fr; }
     header { padding: 20px 16px; }
-    header h1 { font-size: 18px; }
-    table { font-size: 12px; }
-    table th, table td { padding: 10px; }
+    main { padding: 20px 14px; }
   }
 </style>
 </head>
 <body>
 
-<!-- Header -->
 <header>
   <div class="header-row">
     <div>
-      <h1>1:1 문의 VOC 대시보드</h1>
-      <p>실시간 고객 피드백 및 요청사항 관리</p>
+      <h1>📊 1:1 문의 VOC 대시보드</h1>
+      <p id="header-subtitle">데이터 불러오는 중...</p>
     </div>
-    <button class="refresh-btn" onclick="location.reload()">
-      <span class="refresh-icon">⟳</span> 새로고침
+    <button class="refresh-btn" id="refresh-btn" onclick="fetchData()">
+      <span class="refresh-icon">↻</span> 새로고침
     </button>
   </div>
 </header>
 
-<!-- Status Bar -->
 <main>
-  <div class="status-bar" id="statusBar"></div>
 
-  <!-- Tabs -->
-  <div class="tabs">
-    <button class="tab active" onclick="switchTab('overview')">대시보드</button>
-    <button class="tab" onclick="switchTab('today')">오늘 현황</button>
-    <button class="tab" onclick="switchTab('pending')">대기 중</button>
-    <button class="tab" onclick="switchTab('resolved')">완료됨</button>
-    <button class="tab" onclick="switchTab('future')">향후 대응 방향</button>
+  <div class="status-bar" id="status-bar"></div>
+
+  <!-- View Tabs -->
+  <div class="view-tabs">
+    <button class="view-tab active" id="tab-voc"  onclick="switchView('voc')">📊 VOC 대시보드</button>
+    <button class="view-tab"        id="tab-plan" onclick="switchView('plan')">🗺️ 향후 대응 방향</button>
   </div>
 
-  <!-- Tab: Overview -->
-  <div class="tab-content active" id="overview-tab">
-    <div class="card-grid" id="overviewCards">
-      <!-- populated by JS -->
+  <!-- VOC VIEW -->
+  <div id="voc-view">
+    <div class="summary-grid">
+      <div class="summary-card total">
+        <div class="card-label">총 문의</div>
+        <div class="card-value" id="total-count">—</div>
+        <div class="card-sub">전체 VOC 건수</div>
+      </div>
+      <div class="summary-card customer">
+        <div class="card-label">고객 문의</div>
+        <div class="card-value" id="customer-count">—</div>
+        <div class="card-sub">고객 CALL · CHAT · 메일</div>
+      </div>
+      <div class="summary-card seller">
+        <div class="card-label">판매자 문의</div>
+        <div class="card-value" id="seller-count">—</div>
+        <div class="card-sub">판매자 CALL · CHAT</div>
+      </div>
+    </div>
+
+    <div class="filter-bar">
+      <span>구분 필터:</span>
+      <button class="filter-btn active" data-filter="all">전체</button>
+      <button class="filter-btn" data-filter="고객 CALL">고객 CALL</button>
+      <button class="filter-btn" data-filter="고객 CHAT">고객 CHAT</button>
+      <button class="filter-btn" data-filter="고객 메일">고객 메일</button>
+      <button class="filter-btn" data-filter="판매자 CALL">판매자 CALL</button>
+      <button class="filter-btn" data-filter="판매자 CHAT">판매자 CHAT</button>
+    </div>
+
+    <div class="content-grid">
+      <div class="panel">
+        <div class="panel-header">
+          유형별 문의 건수
+          <span class="badge" id="type-badge">전체</span>
+        </div>
+        <div class="type-list" id="type-list"></div>
+      </div>
+      <div class="panel">
+        <div class="voc-header-info">
+          <div class="voc-title" id="voc-panel-title">전체 VOC 목록</div>
+          <div class="voc-count-badge" id="voc-panel-count">0건</div>
+        </div>
+        <div class="voc-list" id="voc-list"></div>
+      </div>
     </div>
   </div>
 
-  <!-- Tab: Today -->
-  <div class="tab-content" id="today-tab">
-    <div class="card-grid" id="todayCards">
-      <!-- populated by JS -->
+  <!-- PLAN VIEW -->
+  <div id="plan-view">
+    <div class="plan-stats">
+      <div class="plan-stat stat-all active" onclick="filterPlan('all')">
+        <div class="plan-stat-label">전체</div>
+        <div class="plan-stat-value" id="cnt-all">—</div>
+      </div>
+      <div class="plan-stat stat-deploy" onclick="filterPlan('배포완료')">
+        <div class="plan-stat-label">✅ 배포 완료</div>
+        <div class="plan-stat-value" id="cnt-deploy">—</div>
+      </div>
+      <div class="plan-stat stat-review" onclick="filterPlan('검토중')">
+        <div class="plan-stat-label">🔍 검토 중</div>
+        <div class="plan-stat-value" id="cnt-review">—</div>
+      </div>
+      <div class="plan-stat stat-hold" onclick="filterPlan('보류')">
+        <div class="plan-stat-label">⏸ 보류</div>
+        <div class="plan-stat-value" id="cnt-hold">—</div>
+      </div>
     </div>
-  </div>
 
-  <!-- Tab: Pending -->
-  <div class="tab-content" id="pending-tab">
-    <div class="table-wrapper">
-      <table id="pendingTable">
-        <thead>
-          <tr>
-            <th>제목</th>
-            <th>상태</th>
-            <th>작성일</th>
-            <th>액션</th>
-          </tr>
-        </thead>
-        <tbody>
-          <!-- populated by JS -->
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- Tab: Resolved -->
-  <div class="tab-content" id="resolved-tab">
-    <div class="table-wrapper">
-      <table id="resolvedTable">
-        <thead>
-          <tr>
-            <th>제목</th>
-            <th>상태</th>
-            <th>완료일</th>
-            <th>액션</th>
-          </tr>
-        </thead>
-        <tbody>
-          <!-- populated by JS -->
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- Tab: Future Response Direction -->
-  <div class="tab-content" id="future-tab">
-    <div class="card-grid" id="futureCards">
-      <!-- populated by JS -->
+    <div class="plan-panel">
+      <div class="plan-panel-header">
+        <div class="plan-panel-title" id="plan-panel-title">🗺️ 전체 대응 방향</div>
+        <div class="plan-count-badge" id="plan-count-badge">0건</div>
+      </div>
+      <div class="plan-table-wrap">
+        <table class="plan-table">
+          <thead>
+            <tr>
+              <th>구분</th>
+              <th>개선 내용</th>
+              <th>개발 여부</th>
+              <th>Jira</th>
+              <th>비고</th>
+            </tr>
+          </thead>
+          <tbody id="plan-tbody"></tbody>
+        </table>
+      </div>
     </div>
   </div>
 
 </main>
 
 <script>
-// ═══════════════════════════════════════════════
-//  DATA
-// ═══════════════════════════════════════════════
+const API_URL = 'https://script.google.com/macros/s/AKfycbxB8rff29BWaZ_IXo1mvjP_u7Oh2plRL2Lzmj3xDqICidw5R8ntXE0fU8-MwwKtWBxucw/exec';
 
-const mockData = {
-  overview: [
-    { id: 1, title: "앱 로그인 불가 이슈", category: "버그", status: "진행중", date: "2025-03-24", jiraKey: "VOC-101" },
-    { id: 2, title: "결제 수수료 문의", category: "문의", status: "대기중", date: "2025-03-23", jiraKey: "VOC-102" },
-    { id: 3, title: "배송 배송 요청", category: "요청", status: "완료", date: "2025-03-22", jiraKey: "VOC-103" },
-    { id: 4, title: "UI/UX 개선 제안", category: "제안", status: "진행중", date: "2025-03-21", jiraKey: "VOC-104" },
-    { id: 5, title: "API 성능 이슈", category: "성능", status: "대기중", date: "2025-03-20", jiraKey: "VOC-105" },
-    { id: 6, title: "데이터 내보내기 기능 요청", category: "기능", status: "진행중", date: "2025-03-19", jiraKey: "VOC-106" },
-  ],
+let RAW = [
+  {"gubun":"고객 CALL","date":"19일","type":"AI > 문의 전달 불안","num":1,"voc":"1:1 문의 AI 너무 불편하다고 함, AI고도화가 안된 것도 문제지만 AI가 어디까지 판매자에게 전달할지도 모르고 정보 누실이 우려 된다고 함, 현재 라이브하는 판매자 대다수가 1:1 문의가 온지 모르고 있다고 함, AI 기능 제거 요청"},
+  {"gubun":"고객 CALL","date":"19일","type":"상담 종료 권한 > 수정/삭제 불가","num":2,"voc":"이전 1:1문의 삭제 문의"},
+  {"gubun":"고객 CALL","date":"19일","type":"AI > 직접 소통 불가","num":3,"voc":"1:1문의 AI개편 너무 불편하다심"},
+  {"gubun":"고객 CALL","date":"19일","type":"AI > 직접 소통 불가","num":4,"voc":"1:1문의 ai답변 불만"},
+  {"gubun":"고객 CALL","date":"19일","type":"1:1 문의 방식","num":5,"voc":"1:1문의 불편하다고 불만"},
+  {"gubun":"고객 CALL","date":"20일","type":"상담 종료 권한 > 수정/삭제 불가","num":6,"voc":"1:1문의 수정 방법 문의"},
+  {"gubun":"고객 CALL","date":"20일","type":"1:1 문의 방식","num":7,"voc":"1:1 문의가 변경 된건지?"},
+  {"gubun":"고객 CALL","date":"20일","type":"AI > 직접 소통 불가","num":8,"voc":"1:1문의 삭제 불가 불만"},
+  {"gubun":"고객 CALL","date":"20일","type":"AI > 직접 소통 불가","num":9,"voc":"1:1문의 보내자 마자 ai가 상담을 자동으로 종료문의"},
+  {"gubun":"고객 CALL","date":"20일","type":"1:1 문의 방식","num":10,"voc":"기존 1:1문의를 이어갈 수 없다, 너무 불편하다"},
+  {"gubun":"고객 CALL","date":"23일","type":"1:1 문의 방식","num":11,"voc":"1:1문의 기능 관련 불만"},
+  {"gubun":"고객 CALL","date":"23일","type":"상담 종료 권한 > 수정/삭제 불가","num":12,"voc":"1:1문의 수정 및 삭제 문의"},
+  {"gubun":"고객 CALL","date":"23일","type":"상담 종료 권한 > 사용자 제어 불가","num":13,"voc":"1:1문의 남기면 내가 종료 못하나"},
+  {"gubun":"고객 CHAT","date":"19일","type":"AI > 직접 소통 불가","num":14,"voc":"AI랑 구매자랑 얘기할일이 뭐가있나요. 일대일원상태로 복구해주시고 이상한기능좀 자제해주세요ㅠ"},
+  {"gubun":"고객 CHAT","date":"20일","type":"AI > 직접 소통 불가","num":15,"voc":"일대일은 판매자랑 직접 소통하는건데 ai가 왜거기서 답을 하는건지, 판매자랑 소통이 전혀안돼요"},
+  {"gubun":"고객 CHAT","date":"20일","type":"1:1 문의 방식","num":16,"voc":"1:1 문의 이거 너무 불편해요. 구버전으로 돌려주세요"},
+  {"gubun":"고객 CHAT","date":"20일","type":"상담 종료 권한 > 수정/삭제 불가","num":17,"voc":"1:1문의 삭제 방법 문의"},
+  {"gubun":"고객 CHAT","date":"23일","type":"1:1 문의 방식","num":18,"voc":"이전 1대1 문의 미노출"},
+  {"gubun":"고객 메일","date":"19일","type":"1:1 문의 방식","num":19,"voc":"문의하기 너무 불편합니다. 구버전으로 운영해주세요. 소통이 안되잖습니까"},
+  {"gubun":"고객 메일","date":"19일","type":"AI > 직접 소통 불가","num":20,"voc":"1:1 문의 너무 불편합니다. 판매자한테 직접 하고 싶어도 AI가 중간에서 답을 해버리니까 방법도 없고, 완료된 1:1문의 예전처럼 삭제하고 싶은데 삭제도 안돼요."},
+  {"gubun":"고객 메일","date":"19일","type":"AI > 직접 소통 불가","num":21,"voc":"업그레이드를 하면 더 좋아져야되는데... 일대일도 갑자기 AI로 바뀌고 점점 더 불편하게 변하네요"},
+  {"gubun":"고객 메일","date":"20일","type":"1:1 문의 방식","num":22,"voc":"1:1바뀐거 너무 불편해요!!! 그립 정말 좋아하고 자주 애용하는 유저인데 일대일 너무 불편해서 한마디 안할수가 없네요"},
+  {"gubun":"고객 메일","date":"20일","type":"1:1 문의 방식","num":23,"voc":"1대일 대화창 너무 불편해요"},
+  {"gubun":"고객 메일","date":"20일","type":"1:1 문의 방식","num":24,"voc":"1:1문의 개편이 너무 불편하다"},
+  {"gubun":"고객 메일","date":"20일","type":"AI > 문의 전달 불안","num":25,"voc":"1:1 문의를 보냈는데 AI가 읽은건지 판매자가 읽은건지 모르겠다"},
+  {"gubun":"고객 메일","date":"20일","type":"1:1 문의 방식","num":26,"voc":"1:1문의 개편이 너무 불편하고 이전처럼 돌아가길 원한다"},
+  {"gubun":"고객 메일","date":"20일","type":"AI > 직접 소통 불가","num":27,"voc":"AI 개입 없이 판매자와 직접 소통하고 싶다"},
+  {"gubun":"고객 메일","date":"20일","type":"1:1 문의 방식","num":28,"voc":"1:1문의 개편이 불편하다"},
+  {"gubun":"고객 메일","date":"20일","type":"상담 종료 권한 > 자동 종료 오해","num":29,"voc":"상담이 자동 종료되었다는 메시지를 받았는데 판매자가 종료한건지 자동종료인지 모르겠다"},
+  {"gubun":"고객 메일","date":"20일","type":"AI > 직접 소통 불가","num":30,"voc":"판매자도 불편하다하고 구매자도 불편하면 그건 잘못된거아닌가요? 제발 그냥좀 놔둬주세요"},
+  {"gubun":"고객 메일","date":"20일","type":"1:1 문의 방식","num":31,"voc":"일대일답변 예전버전으로해주세요. 올려도 답변도 없고 불편합니다."},
+  {"gubun":"고객 메일","date":"20일","type":"AI > 직접 소통 불가","num":32,"voc":"1:1 문의를 실시간으로 봐야 방송중에 바로 해결이 되는 경우들이 많은데 바로 확인할 수 없게 바꿔놓고 왜 AI가 거릅니까?"},
+  {"gubun":"고객 메일","date":"20일","type":"AI > 직접 소통 불가","num":33,"voc":"ai문의하기 좀 없애주세요. 너무 불편하고 소통이 안됩니다."},
+  {"gubun":"판매자 CALL","date":"20일","type":"AI > AI 오안내","num":1,"voc":"1:1문의 개편되고 너무 불편, ai가 임의로 대답해버려서 고객이 오해할수 있음."},
+  {"gubun":"판매자 CALL","date":"20일","type":"AI > 직접 소통 불가","num":2,"voc":"1:1문의 AI가 모든 고객한테 친절하게 한다"},
+  {"gubun":"판매자 CALL","date":"20일","type":"1:1 문의 방식","num":3,"voc":"1:1문의 개편된거 너무 불편, pc로 비즈니스센터 유저 문의 들어가면 이전 문의건만 나오고 있고 당장 개선 요청."},
+  {"gubun":"판매자 CALL","date":"23일","type":"AI > 문의 전달 불안","num":4,"voc":"1:1문의 너무 불편하다 / AI가 이상하게 답변하고 고객도 답답해하고 판매자도 답답하다 / 원래대로 돌려달라"},
+  {"gubun":"판매자 CALL","date":"23일","type":"AI > 직접 소통 불가","num":5,"voc":"1:1문의 AI 자동 응답 끌수있도록 요청, 빠른 개선 요청"},
+  {"gubun":"판매자 CHAT","date":"19일","type":"1:1 문의 방식","num":6,"voc":"1대1 문의 확인필요에 1로 남아있어서 문의"},
+  {"gubun":"판매자 CHAT","date":"19일","type":"1:1 문의 방식","num":7,"voc":"1대1 화면이 바뀌었는데 1대1이 등록되면 알림이 안와서 불편합니다"},
+  {"gubun":"판매자 CHAT","date":"20일","type":"문의 유형/검색","num":8,"voc":"1대1 문의화면 바뀐거에서 '대기'상태의 1대1 문의글도 유저응답률에 영향 문의"},
+  {"gubun":"판매자 CHAT","date":"20일","type":"문의 유형/검색","num":9,"voc":"1:1문의 서비스점수 산정 문의"},
+  {"gubun":"판매자 CHAT","date":"20일","type":"1:1 문의 방식","num":10,"voc":"새로 변경된 1:1 시스템을 어떻게 사용하는 건지 도저희 모르겠습니다."},
+  {"gubun":"판매자 CHAT","date":"20일","type":"1:1 문의 방식","num":11,"voc":"1:1 답변하는 법"},
+  {"gubun":"판매자 CHAT","date":"20일","type":"AI > 직접 소통 불가","num":12,"voc":"고객 응대를 직접해야하는데 AI가 자꾸 답변을 해서 불편한데 AI답변 끌 수 있는지 문의"},
+  {"gubun":"판매자 CHAT","date":"20일","type":"AI > 자동 응답/개입 과도","num":13,"voc":"일대일 ai 봇 자동으로 채팅 답변을 끄고 싶습니다"},
+  {"gubun":"판매자 CHAT","date":"20일","type":"문의 유형/검색","num":14,"voc":"1:1문의 응답률 문의"},
+  {"gubun":"판매자 CHAT","date":"20일","type":"AI > AI 오안내","num":15,"voc":"일대일 ai 기능원래 대로 바꿔 주세요. 너무 불편 합니다."},
+  {"gubun":"판매자 CHAT","date":"20일","type":"문의 유형/검색","num":16,"voc":"1:1문의 유형 문의"},
+  {"gubun":"판매자 CHAT","date":"23일","type":"AI > 자동 응답/개입 과도","num":17,"voc":"1:1 문의 자동응답 off 기능 문의"},
+  {"gubun":"판매자 CHAT","date":"23일","type":"1:1 문의 방식","num":18,"voc":"1:1 문의 구버전 문의 내역보기 클릭 시 최신글이 보여지지 않음 문의"},
+  {"gubun":"판매자 CHAT","date":"23일","type":"1:1 문의 방식","num":19,"voc":"1대1문의가 너무 불편하게 바꼈는데, 다시 원래대로 복구는 안되나요?"}
+];
 
-  today: [
-    { id: 10, title: "오늘 접수된 긴급 이슈", category: "긴급", status: "즉시 처리 필요", date: "2025-03-25", jiraKey: "VOC-200" },
-    { id: 11, title: "고객 만족도 피드백", category: "피드백", status: "검토중", date: "2025-03-25", jiraKey: "VOC-201" },
-  ],
+let PLAN_DATA = [];
+let planFilter = 'all';
+let currentView = 'voc';
 
-  pending: [
-    { id: 20, title: "이전 회원 데이터 마이그레이션", category: "작업", status: "대기중", date: "2025-03-15", jiraKey: "VOC-300" },
-    { id: 21, title: "푸시 알림 시스템 개선", category: "개선", status: "대기중", date: "2025-03-10", jiraKey: "VOC-301" },
-    { id: 22, title: "보안 감사 - OWASP 체크", category: "보안", status: "대기중", date: "2025-03-05", jiraKey: "VOC-302" },
-  ],
-
-  resolved: [
-    { id: 30, title: "버튼 텍스트 수정", category: "기타", status: "완료", date: "2025-03-18", jiraKey: "VOC-400" },
-    { id: 31, title: "DB 마이그레이션 완료", category: "인프라", status: "완료", date: "2025-03-17", jiraKey: "VOC-401" },
-    { id: 32, title: "이메일 인증 코드 버그 수정", category: "버그", status: "완료", date: "2025-03-16", jiraKey: "VOC-402" },
-  ],
-
-  future: [
-    { 
-      id: 50, 
-      title: "모바일 앱 성능 최적화", 
-      category: "기술 부채",
-      description: "모바일 앱의 로딩 속도를 개선하고 메모리 누수를 해결합니다.",
-      status: "계획중",
-      devStatus: "dev",
-      date: "2025-04-01",
-      jiraKey: "VOC-500",
-      timeline: "2주"
-    },
-    { 
-      id: 51, 
-      title: "사용자 인증 시스템 재설계", 
-      category: "기술 개선",
-      description: "OAuth 2.0 기반의 더 보안성 높은 인증 시스템을 구현합니다.",
-      status: "설계중",
-      devStatus: "staging",
-      date: "2025-03-28",
-      jiraKey: "VOC-501",
-      timeline: "4주"
-    },
-    { 
-      id: 52, 
-      title: "대시보드 분석 기능 추가", 
-      category: "신기능",
-      description: "고객 피드백 트렌드 분석 및 시각화 기능을 추가합니다.",
-      status: "요구사항 정의",
-      devStatus: "dev",
-      date: "2025-04-15",
-      jiraKey: "VOC-502",
-      timeline: "3주"
-    },
-    { 
-      id: 53, 
-      title: "국제화(i18n) 지원 확대", 
-      category: "현지화",
-      description: "추가 언어 지원 및 지역화 기능을 확장합니다.",
-      status: "계획중",
-      devStatus: "dev",
-      date: "2025-05-01",
-      jiraKey: "VOC-503",
-      timeline: "6주"
-    },
-  ]
-};
-
-// ═══════════════════════════════════════════════
-//  FUNCTIONS
-// ═══════════════════════════════════════════════
-
-function switchTab(tabName) {
-  // Hide all content
-  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-  document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
-
-  // Show selected
-  document.getElementById(tabName + '-tab').classList.add('active');
-  event.target.classList.add('active');
-}
-
-function render() {
-  renderOverview();
-  renderToday();
-  renderPending();
-  renderResolved();
-  renderFuture();
-}
-
-function renderOverview() {
-  const container = document.getElementById('overviewCards');
-  container.innerHTML = mockData.overview.map(item => `
-    <div class="card">
-      <div class="card-header">
-        <div class="card-title">${item.title}</div>
-      </div>
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
-        <span class="tag ${getStatusClass(item.status)}">${item.status}</span>
-        <a href="https://jira.your-domain.com/browse/${item.jiraKey}" class="jira-btn" target="_blank">Jira</a>
-      </div>
-      <div class="card-meta">
-        <span>${item.category}</span>
-        <span>•</span>
-        <span>${item.date}</span>
-      </div>
-    </div>
-  `).join('');
-}
-
-function renderToday() {
-  const container = document.getElementById('todayCards');
-  if (mockData.today.length === 0) {
-    container.innerHTML = `
-      <div style="grid-column: 1/-1;">
-        <div class="empty-state">
-          <div class="empty-state-icon">📋</div>
-          <h3>오늘의 항목이 없습니다</h3>
-          <p>새로운 VOC가 접수되면 여기에 나타납니다</p>
-        </div>
-      </div>
-    `;
-    return;
-  }
-  container.innerHTML = mockData.today.map(item => `
-    <div class="card">
-      <div class="card-header">
-        <div class="card-title">${item.title}</div>
-      </div>
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
-        <span class="tag ${getStatusClass(item.status)}">${item.status}</span>
-        <a href="https://jira.your-domain.com/browse/${item.jiraKey}" class="jira-btn" target="_blank">Jira</a>
-      </div>
-      <div class="card-meta">
-        <span>${item.category}</span>
-        <span>•</span>
-        <span>${item.date}</span>
-      </div>
-    </div>
-  `).join('');
-}
-
-function renderPending() {
-  const tbody = document.querySelector('#pendingTable tbody');
-  tbody.innerHTML = mockData.pending.map(item => `
-    <tr>
-      <td><strong>${item.title}</strong></td>
-      <td><span class="tag">${item.status}</span></td>
-      <td>${item.date}</td>
-      <td>
-        <a href="https://jira.your-domain.com/browse/${item.jiraKey}" class="jira-btn" target="_blank">Jira</a>
-      </td>
-    </tr>
-  `).join('');
-}
-
-function renderResolved() {
-  const tbody = document.querySelector('#resolvedTable tbody');
-  tbody.innerHTML = mockData.resolved.map(item => `
-    <tr>
-      <td><strong>${item.title}</strong></td>
-      <td><span class="tag resolved">${item.status}</span></td>
-      <td>${item.date}</td>
-      <td>
-        <a href="https://jira.your-domain.com/browse/${item.jiraKey}" class="jira-btn" target="_blank">Jira</a>
-      </td>
-    </tr>
-  `).join('');
-}
-
-function renderFuture() {
-  const container = document.getElementById('futureCards');
-  container.innerHTML = mockData.future.map(item => `
-    <div class="card">
-      <div class="card-header">
-        <div class="card-title">${item.title}</div>
-      </div>
-      <p style="font-size: 13px; color: #6b7280; margin-top: 8px; line-height: 1.5;">${item.description}</p>
-      <div style="margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
-        <span class="tag">${item.status}</span>
-        <span class="badge ${item.devStatus}">${item.devStatus.toUpperCase()}</span>
-      </div>
-      <div class="card-meta" style="margin-top: 12px;">
-        <span>${item.category}</span>
-        <span>•</span>
-        <span>예상 기간: ${item.timeline}</span>
-      </div>
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px;">
-        <a href="https://jira.your-domain.com/browse/${item.jiraKey}" class="jira-btn" target="_blank">Jira 이동</a>
-      </div>
-    </div>
-  `).join('');
-}
-
-function getStatusClass(status) {
-  if (status.includes('완료')) return 'resolved';
-  if (status.includes('진행')) return 'wip';
-  return 'todo';
+function switchView(view) {
+  currentView = view;
+  document.getElementById('voc-view').style.display  = view === 'voc'  ? '' : 'none';
+  document.getElementById('plan-view').style.display = view === 'plan' ? '' : 'none';
+  document.getElementById('tab-voc').classList.toggle('active',  view === 'voc');
+  document.getElementById('tab-plan').classList.toggle('active', view === 'plan');
+  if (view === 'plan') renderPlan();
 }
 
 async function fetchData() {
-  // In production, replace this with actual API call
-  const statusBar = document.getElementById('statusBar');
+  const btn = document.getElementById('refresh-btn');
+  const bar = document.getElementById('status-bar');
+  const sub = document.getElementById('header-subtitle');
+  btn.disabled = true;
+  btn.classList.add('spinning');
+  bar.className = 'status-bar visible';
+  bar.textContent = '⏳ 스프레드시트에서 최신 데이터를 불러오는 중...';
   try {
-    // Simulate API call
-    // const response = await fetch('/api/voc-items');
-    // const data = await response.json();
-    // mockData = data;
-    // render();
-    statusBar.textContent = '✓ 데이터 동기화됨';
-    statusBar.classList.add('visible');
-    setTimeout(() => statusBar.classList.remove('visible'), 3000);
-  } catch (error) {
-    statusBar.textContent = '⚠ 데이터 로드 실패: ' + error.message;
-    statusBar.classList.add('error', 'visible');
+    const res = await fetch(API_URL, { cache: 'no-store' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const parsed = await res.json();
+    if (Array.isArray(parsed)) {
+      if (!parsed.length) throw new Error('데이터가 비어있습니다');
+      RAW = parsed;
+    } else if (parsed && Array.isArray(parsed.voc)) {
+      if (!parsed.voc.length) throw new Error('데이터가 비어있습니다');
+      RAW = parsed.voc;
+      PLAN_DATA = parsed.plan || [];
+    } else {
+      throw new Error('응답 형식 오류');
+    }
+    const now = new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' });
+    sub.textContent = '마지막 업데이트: ' + now;
+    bar.className = 'status-bar';
+    activeFilter = 'all';
+    activeType = null;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    document.querySelector('.filter-btn[data-filter="all"]').classList.add('active');
+    render();
+    if (currentView === 'plan') renderPlan();
+  } catch (e) {
+    bar.className = 'status-bar error visible';
+    bar.textContent = '⚠️ 데이터 로드 실패: ' + e.message + ' — 기존 데이터를 표시합니다.';
+    render();
+  } finally {
+    btn.disabled = false;
+    btn.classList.remove('spinning');
   }
 }
 
-// ═══════════════════════════════════════════════
-//  INIT
-// ═══════════════════════════════════════════════
-render();  // show fallback data immediately
+let activeFilter = 'all';
+let activeType   = null;
+
+function filteredByGubun() {
+  return activeFilter === 'all' ? RAW : RAW.filter(r => r.gubun === activeFilter);
+}
+function finalFiltered() {
+  let d = filteredByGubun();
+  if (activeType) d = d.filter(r => r.type === activeType);
+  return d;
+}
+function isCustomer(r) { return r.gubun.startsWith('고객'); }
+
+function renderSummary() {
+  const base = filteredByGubun();
+  document.getElementById('total-count').textContent    = base.length;
+  document.getElementById('customer-count').textContent = base.filter(isCustomer).length;
+  document.getElementById('seller-count').textContent   = base.filter(r => !isCustomer(r)).length;
+}
+
+function renderTypeList() {
+  const base = filteredByGubun();
+  const counts = {};
+  base.forEach(r => { counts[r.type] = (counts[r.type] || 0) + 1; });
+  const maxCount = Math.max(...Object.values(counts), 1);
+  const types = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  document.getElementById('type-badge').textContent = activeFilter === 'all' ? '전체' : activeFilter;
+  const container = document.getElementById('type-list');
+  container.innerHTML = '';
+  const allRow = document.createElement('div');
+  allRow.className = 'type-row' + (activeType === null ? ' active' : '');
+  allRow.innerHTML = '<div class="type-bar-wrap"><div class="type-name">📋 전체 보기</div><div class="bar-track"><div class="bar-fill" style="width:100%"></div></div></div><div class="type-count">' + base.length + '</div>';
+  allRow.addEventListener('click', () => { activeType = null; render(); });
+  container.appendChild(allRow);
+  types.forEach(([type, count]) => {
+    const pct = Math.round(count / maxCount * 100);
+    const row = document.createElement('div');
+    row.className = 'type-row' + (activeType === type ? ' active' : '');
+    row.innerHTML = '<div class="type-bar-wrap"><div class="type-name" title="' + type + '">' + type + '</div><div class="bar-track"><div class="bar-fill" style="width:' + pct + '%"></div></div></div><div class="type-count">' + count + '</div>';
+    row.addEventListener('click', () => { activeType = activeType === type ? null : type; render(); });
+    container.appendChild(row);
+  });
+}
+
+function renderVocList() {
+  const data = finalFiltered();
+  const title = activeType ? activeType : (activeFilter === 'all' ? '전체 VOC 목록' : activeFilter + ' 목록');
+  document.getElementById('voc-panel-title').textContent = title;
+  document.getElementById('voc-panel-count').textContent = data.length + '건';
+  const container = document.getElementById('voc-list');
+  container.innerHTML = '';
+  if (!data.length) {
+    container.innerHTML = '<div class="empty-state"><div class="icon">🔍</div><p>해당하는 VOC가 없습니다</p></div>';
+    return;
+  }
+  data.forEach(r => {
+    const tagClass = isCustomer(r) ? 'tag-gubun-customer' : 'tag-gubun-seller';
+    const item = document.createElement('div');
+    item.className = 'voc-item';
+    item.innerHTML = '<div class="voc-meta"><span class="tag ' + tagClass + '">' + r.gubun + '</span><span class="tag tag-date">' + r.date + '</span><span class="tag">' + r.type + '</span><span class="tag-num">#' + r.num + '</span></div><div class="voc-content">' + r.voc.replace(/<br\s*\/?>/gi,' ').replace(/\s+/g,' ').trim() + '</div>';
+    item.addEventListener('click', () => item.classList.toggle('expanded'));
+    container.appendChild(item);
+  });
+}
+
+function render() { renderSummary(); renderTypeList(); renderVocList(); }
+
+function devBadgeHTML(status) {
+  if (!status) return '<span class="dev-badge unknown">—</span>';
+  const s = status.trim();
+  if (s.includes('배포')) return '<span class="dev-badge deployed">✅ ' + s + '</span>';
+  if (s.includes('검토')) return '<span class="dev-badge reviewing">🔍 ' + s + '</span>';
+  if (s.includes('보류')) return '<span class="dev-badge hold">⏸ ' + s + '</span>';
+  return '<span class="dev-badge unknown">' + s + '</span>';
+}
+
+function jiraBtnHTML(url) {
+  if (!url || !url.trim()) return '<span style="color:#ccc">—</span>';
+  const m = url.match(/\/browse\/([A-Z0-9]+-\d+)/i);
+  const ticket = m ? m[1].toUpperCase() : url;
+  return '<a class="jira-btn" href="' + url + '" target="_blank" rel="noopener">🔗 ' + ticket + '</a>';
+}
+
+function filterPlan(filter) {
+  planFilter = filter;
+  document.querySelectorAll('.plan-stat').forEach(el => el.classList.remove('active'));
+  const map = { all: 'stat-all', '배포완료': 'stat-deploy', '검토중': 'stat-review', '보류': 'stat-hold' };
+  document.querySelector('.' + map[filter]).classList.add('active');
+  renderPlanTable();
+}
+
+function renderPlan() {
+  const total    = PLAN_DATA.length;
+  const deployed = PLAN_DATA.filter(r => r.devStatus && r.devStatus.includes('배포')).length;
+  const reviewing= PLAN_DATA.filter(r => r.devStatus && r.devStatus.includes('검토')).length;
+  const hold     = PLAN_DATA.filter(r => r.devStatus && r.devStatus.includes('보류')).length;
+  document.getElementById('cnt-all').textContent    = total;
+  document.getElementById('cnt-deploy').textContent = deployed;
+  document.getElementById('cnt-review').textContent = reviewing;
+  document.getElementById('cnt-hold').textContent   = hold;
+  renderPlanTable();
+}
+
+function renderPlanTable() {
+  let data = PLAN_DATA;
+  let titleLabel = '전체 대응 방향';
+  if (planFilter === '배포완료') { data = PLAN_DATA.filter(r => r.devStatus && r.devStatus.includes('배포')); titleLabel = '✅ 배포 완료'; }
+  else if (planFilter === '검토중') { data = PLAN_DATA.filter(r => r.devStatus && r.devStatus.includes('검토')); titleLabel = '🔍 검토 중'; }
+  else if (planFilter === '보류')   { data = PLAN_DATA.filter(r => r.devStatus && r.devStatus.includes('보류')); titleLabel = '⏸ 보류'; }
+  document.getElementById('plan-panel-title').textContent = '🗺️ ' + titleLabel;
+  document.getElementById('plan-count-badge').textContent = data.length + '건';
+  const tbody = document.getElementById('plan-tbody');
+  if (!data.length) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:50px 20px;color:#bbb;">' + (PLAN_DATA.length === 0 ? '⏳ 새로고침을 눌러 데이터를 불러와 주세요.' : '해당 상태의 항목이 없습니다.') + '</td></tr>';
+    return;
+  }
+  tbody.innerHTML = '';
+  data.forEach(r => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = '<td class="cat-cell">' + (r.category||'—') + '</td><td>' + (r.improvement||'—') + '</td><td>' + devBadgeHTML(r.devStatus) + '</td><td>' + jiraBtnHTML(r.jiraUrl) + '</td><td class="note-cell">' + (r.note||'—') + '</td>';
+    tbody.appendChild(tr);
+  });
+}
+
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeFilter = btn.dataset.filter;
+    activeType = null;
+    render();
+  });
+});
+
+render();
 fetchData();
 </script>
 </body>
