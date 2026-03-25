@@ -141,6 +141,7 @@
     color: white;
     font-weight: 600;
   }
+  /* 전체 버튼은 별도 스타일 없음 — 동일하게 처리 */
 
   /* ─── Two column layout ─── */
   .content-grid {
@@ -616,11 +617,9 @@ function closePlan() {
 function handleOverlayClick(e) {
   if (e.target === document.getElementById('plan-overlay')) closePlan();
 }
-
-// ESC 키로 닫기
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closePlan(); });
 
-// ── 상태 필터 ──
+// ── 플랜 상태 필터 (단일 선택) ──
 function filterPlan(f) {
   planFilter = f;
   document.querySelectorAll('.plan-status-btn').forEach(b => b.classList.remove('active'));
@@ -655,10 +654,10 @@ async function fetchData() {
     const now = new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' });
     sub.textContent = '마지막 업데이트: ' + now;
     bar.className = 'status-bar';
-    activeFilter = 'all';
+    // 필터 초기화
+    activeFilters = new Set();
     activeType = null;
-    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-    document.querySelector('.filter-btn[data-filter="all"]').classList.add('active');
+    syncFilterButtons();
     render();
     if (document.getElementById('plan-overlay').classList.contains('open')) renderPlanTable();
   } catch (e) {
@@ -671,12 +670,17 @@ async function fetchData() {
   }
 }
 
-// ── VOC 상태 ──
-let activeFilter = 'all';
-let activeType   = null;
+// ══════════════════════════════════════
+//  구분 필터 — 복수 선택
+//  activeFilters: Set<string>
+//  비어있으면 = 전체
+// ══════════════════════════════════════
+let activeFilters = new Set(); // 비어 있으면 전체
+let activeType    = null;
 
 function filteredByGubun() {
-  return activeFilter === 'all' ? RAW : RAW.filter(r => r.gubun === activeFilter);
+  if (activeFilters.size === 0) return RAW;
+  return RAW.filter(r => activeFilters.has(r.gubun));
 }
 function finalFiltered() {
   let d = filteredByGubun();
@@ -684,6 +688,47 @@ function finalFiltered() {
   return d;
 }
 function isCustomer(r) { return r.gubun.startsWith('고객'); }
+
+// 버튼 active 상태 동기화
+function syncFilterButtons() {
+  const isAll = activeFilters.size === 0;
+  document.querySelectorAll('.filter-btn').forEach(b => {
+    const f = b.dataset.filter;
+    if (f === 'all') {
+      b.classList.toggle('active', isAll);
+    } else {
+      b.classList.toggle('active', activeFilters.has(f));
+    }
+  });
+}
+
+// 필터 버튼 클릭 핸들러
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const f = btn.dataset.filter;
+    if (f === 'all') {
+      // 전체: 선택 초기화
+      activeFilters = new Set();
+    } else {
+      // 개별 토글
+      if (activeFilters.has(f)) {
+        activeFilters.delete(f);
+      } else {
+        activeFilters.add(f);
+      }
+    }
+    activeType = null;
+    syncFilterButtons();
+    render();
+  });
+});
+
+// ── badge/title 텍스트 생성 ──
+function filterLabel() {
+  if (activeFilters.size === 0) return '전체';
+  if (activeFilters.size === 1) return [...activeFilters][0];
+  return [...activeFilters].join(' · ');
+}
 
 function renderSummary() {
   const base = filteredByGubun();
@@ -698,7 +743,7 @@ function renderTypeList() {
   base.forEach(r => { counts[r.type] = (counts[r.type] || 0) + 1; });
   const maxCount = Math.max(...Object.values(counts), 1);
   const types = Object.entries(counts).sort((a, b) => b[1] - a[1]);
-  document.getElementById('type-badge').textContent = activeFilter === 'all' ? '전체' : activeFilter;
+  document.getElementById('type-badge').textContent = filterLabel();
   const container = document.getElementById('type-list');
   container.innerHTML = '';
   const allRow = document.createElement('div');
@@ -718,7 +763,8 @@ function renderTypeList() {
 
 function renderVocList() {
   const data = finalFiltered();
-  const title = activeType ? activeType : (activeFilter === 'all' ? '전체 VOC 목록' : activeFilter + ' 목록');
+  const label = filterLabel();
+  const title = activeType ? activeType : (label === '전체' ? '전체 VOC 목록' : label + ' 목록');
   document.getElementById('voc-panel-title').textContent = title;
   document.getElementById('voc-panel-count').textContent = data.length + '건';
   const container = document.getElementById('voc-list');
@@ -787,18 +833,8 @@ function renderPlanTable() {
   });
 }
 
-// ── 필터 버튼 ──
-document.querySelectorAll('.filter-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    activeFilter = btn.dataset.filter;
-    activeType = null;
-    render();
-  });
-});
-
 // ── Init ──
+syncFilterButtons();
 render();
 fetchData();
 </script>
