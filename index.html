@@ -1,5 +1,656 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head>test</head>
-<body>test</body>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>1:1 문의 VOC 대시보드</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #f5f6fa;
+    color: #1a1a2e;
+    min-height: 100vh;
+  }
+
+  /* ─── Header ─── */
+  header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 28px 40px;
+    box-shadow: 0 4px 20px rgba(102,126,234,0.3);
+  }
+  header h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.3px; }
+  header p  { font-size: 13px; opacity: 0.8; margin-top: 4px; }
+  .header-row { display: flex; align-items: center; justify-content: space-between; }
+  .refresh-btn {
+    background: rgba(255,255,255,0.2);
+    border: 1.5px solid rgba(255,255,255,0.5);
+    color: white;
+    border-radius: 20px;
+    padding: 7px 18px;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: background 0.15s;
+  }
+  .refresh-btn:hover { background: rgba(255,255,255,0.3); }
+  .refresh-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .refresh-icon { display: inline-block; transition: transform 0.5s; }
+  .refresh-btn.spinning .refresh-icon { animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ─── Loading / Error overlay ─── */
+  .status-bar {
+    display: none;
+    align-items: center;
+    gap: 10px;
+    background: #fff8e1;
+    border: 1px solid #ffe082;
+    border-radius: 10px;
+    padding: 10px 18px;
+    font-size: 13px;
+    color: #795548;
+    margin-bottom: 20px;
+  }
+  .status-bar.error { background: #ffebee; border-color: #ef9a9a; color: #c62828; }
+  .status-bar.visible { display: flex; }
+
+  /* ─── Main layout ─── */
+  main { max-width: 1200px; margin: 0 auto; padding: 32px 24px; }
+
+  /* ─── Summary Cards ─── */
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+  .summary-card {
+    background: white;
+    border-radius: 16px;
+    padding: 24px 28px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    border-top: 4px solid transparent;
+    transition: transform 0.15s;
+  }
+  .summary-card:hover { transform: translateY(-2px); }
+  .summary-card.total  { border-top-color: #667eea; }
+  .summary-card.customer { border-top-color: #43b97f; }
+  .summary-card.seller   { border-top-color: #f7931e; }
+
+  .card-label { font-size: 13px; color: #888; font-weight: 500; }
+  .card-value { font-size: 42px; font-weight: 800; line-height: 1; }
+  .total   .card-value { color: #667eea; }
+  .customer .card-value { color: #43b97f; }
+  .seller   .card-value { color: #f7931e; }
+  .card-sub { font-size: 12px; color: #aaa; }
+
+  /* ─── Filter bar ─── */
+  .filter-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .filter-bar span { font-size: 13px; color: #666; font-weight: 500; }
+  .filter-btn {
+    background: white;
+    border: 1.5px solid #e0e0e0;
+    border-radius: 20px;
+    padding: 5px 14px;
+    font-size: 12px;
+    cursor: pointer;
+    color: #555;
+    transition: all 0.15s;
+    font-family: inherit;
+  }
+  .filter-btn:hover { border-color: #667eea; color: #667eea; }
+  .filter-btn.active {
+    background: #667eea;
+    border-color: #667eea;
+    color: white;
+    font-weight: 600;
+  }
+
+  /* ─── Two column layout ─── */
+  .content-grid {
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    gap: 20px;
+    align-items: start;
+  }
+
+  /* ─── Type chart panel ─── */
+  .panel {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    overflow: hidden;
+  }
+  .panel-header {
+    padding: 18px 22px 14px;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 14px;
+    font-weight: 700;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .panel-header .badge {
+    background: #f0f0f0;
+    border-radius: 20px;
+    padding: 2px 10px;
+    font-size: 11px;
+    color: #888;
+    font-weight: 500;
+  }
+
+  /* ─── Type rows ─── */
+  .type-list { padding: 10px 0; }
+  .type-row {
+    padding: 10px 22px;
+    cursor: pointer;
+    transition: background 0.12s;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-left: 3px solid transparent;
+  }
+  .type-row:hover { background: #f7f8ff; }
+  .type-row.active {
+    background: #f0f3ff;
+    border-left-color: #667eea;
+  }
+
+  .type-bar-wrap { flex: 1; }
+  .type-name {
+    font-size: 12.5px;
+    color: #444;
+    font-weight: 500;
+    margin-bottom: 5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 230px;
+  }
+  .type-row.active .type-name { color: #667eea; font-weight: 600; }
+
+  .bar-track {
+    background: #f0f0f0;
+    border-radius: 4px;
+    height: 6px;
+    overflow: hidden;
+  }
+  .bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    background: linear-gradient(90deg, #667eea, #9b59b6);
+    transition: width 0.4s cubic-bezier(0.4,0,0.2,1);
+  }
+  .type-count {
+    font-size: 18px;
+    font-weight: 800;
+    color: #667eea;
+    min-width: 26px;
+    text-align: right;
+  }
+
+  /* ─── VOC list panel ─── */
+  .voc-header-info {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 22px 14px;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  .voc-title { font-size: 14px; font-weight: 700; color: #333; }
+  .voc-count-badge {
+    background: #667eea;
+    color: white;
+    border-radius: 20px;
+    padding: 3px 12px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .voc-list { padding: 8px 0; max-height: 600px; overflow-y: auto; }
+  .voc-item {
+    padding: 14px 22px;
+    border-bottom: 1px solid #f7f7f7;
+    cursor: pointer;
+    transition: background 0.1s;
+  }
+  .voc-item:last-child { border-bottom: none; }
+  .voc-item:hover { background: #f9f9ff; }
+
+  .voc-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+    flex-wrap: wrap;
+  }
+  .tag {
+    font-size: 11px;
+    border-radius: 4px;
+    padding: 2px 8px;
+    font-weight: 600;
+  }
+  .tag-gubun-customer { background: #e8f8f0; color: #2e9e6b; }
+  .tag-gubun-seller   { background: #fff3e0; color: #d0760c; }
+  .tag-date { background: #f0f0f0; color: #777; }
+  .tag-num  { color: #aaa; font-size: 11px; }
+
+  .voc-content {
+    font-size: 13px;
+    color: #444;
+    line-height: 1.6;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .voc-item.expanded .voc-content {
+    display: block;
+    -webkit-line-clamp: unset;
+  }
+
+  /* ─── Empty state ─── */
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #bbb;
+  }
+  .empty-state .icon { font-size: 40px; margin-bottom: 12px; }
+  .empty-state p { font-size: 14px; }
+
+  /* ─── Scrollbar ─── */
+  .voc-list::-webkit-scrollbar { width: 4px; }
+  .voc-list::-webkit-scrollbar-track { background: #f5f5f5; }
+  .voc-list::-webkit-scrollbar-thumb { background: #ddd; border-radius: 4px; }
+
+  @media (max-width: 768px) {
+    .summary-grid { grid-template-columns: 1fr; }
+    .content-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-row">
+    <div>
+      <h1>📊 1:1 문의 VOC 대시보드</h1>
+      <p id="header-subtitle">데이터 불러오는 중...</p>
+    </div>
+    <button class="refresh-btn" id="refresh-btn" onclick="fetchData()">
+      <span class="refresh-icon">↻</span> 새로고침
+    </button>
+  </div>
+</header>
+
+<main>
+
+  <!-- Status bar -->
+  <div class="status-bar" id="status-bar"></div>
+
+  <!-- Summary Cards -->
+  <div class="summary-grid">
+    <div class="summary-card total">
+      <div class="card-label">총 문의</div>
+      <div class="card-value" id="total-count">—</div>
+      <div class="card-sub">전체 VOC 건수</div>
+    </div>
+    <div class="summary-card customer">
+      <div class="card-label">고객 문의</div>
+      <div class="card-value" id="customer-count">—</div>
+      <div class="card-sub">고객 CALL · CHAT · 메일</div>
+    </div>
+    <div class="summary-card seller">
+      <div class="card-label">판매자 문의</div>
+      <div class="card-value" id="seller-count">—</div>
+      <div class="card-sub">판매자 CALL · CHAT</div>
+    </div>
+  </div>
+
+  <!-- Filter bar -->
+  <div class="filter-bar">
+    <span>구분 필터:</span>
+    <button class="filter-btn active" data-filter="all">전체</button>
+    <button class="filter-btn" data-filter="고객 CALL">고객 CALL</button>
+    <button class="filter-btn" data-filter="고객 CHAT">고객 CHAT</button>
+    <button class="filter-btn" data-filter="고객 메일">고객 메일</button>
+    <button class="filter-btn" data-filter="판매자 CALL">판매자 CALL</button>
+    <button class="filter-btn" data-filter="판매자 CHAT">판매자 CHAT</button>
+  </div>
+
+  <!-- Main content -->
+  <div class="content-grid">
+
+    <!-- Type chart -->
+    <div class="panel">
+      <div class="panel-header">
+        유형별 문의 건수
+        <span class="badge" id="type-badge">전체</span>
+      </div>
+      <div class="type-list" id="type-list"></div>
+    </div>
+
+    <!-- VOC list -->
+    <div class="panel">
+      <div class="voc-header-info">
+        <div class="voc-title" id="voc-panel-title">전체 VOC 목록</div>
+        <div class="voc-count-badge" id="voc-panel-count">0건</div>
+      </div>
+      <div class="voc-list" id="voc-list"></div>
+    </div>
+
+  </div>
+</main>
+
+<script>
+// ═══════════════════════════════════════════════
+//  CONFIG — Google Sheets 웹에 게시 CSV URL
+// ═══════════════════════════════════════════════
+const CSV_URL = 'https://docs.google.com/spreadsheets/d/1fnNOdjj5A7SuHAazDoRCwGCHYDc86ZeINBQTQ1x6vf4/pub?gid=542823771&single=true&output=csv';
+
+// ═══════════════════════════════════════════════
+//  CSV PARSER
+// ═══════════════════════════════════════════════
+function parseCSV(text) {
+  const lines = [];
+  let inQuote = false, line = [], cell = '';
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (c === '"') { inQuote = !inQuote; }
+    else if (c === ',' && !inQuote) { line.push(cell.trim()); cell = ''; }
+    else if ((c === '\n' || c === '\r') && !inQuote) {
+      if (c === '\r' && text[i+1] === '\n') i++;
+      line.push(cell.trim()); lines.push(line); line = []; cell = '';
+    } else { cell += c; }
+  }
+  if (cell || line.length) { line.push(cell.trim()); lines.push(line); }
+  return lines;
+}
+
+function csvToRecords(text) {
+  const rows = parseCSV(text);
+  const records = [];
+  let lastGubun = '', lastDate = '';
+  for (let i = 2; i < rows.length; i++) {
+    const r = rows[i];
+    if (!r[4]) continue;
+    const num = parseInt(r[4]);
+    if (isNaN(num)) continue;
+    if (r[0] && r[0].trim()) lastGubun = r[0].trim();
+    if (r[2] && r[2].trim()) lastDate  = r[2].trim();
+    const type = r[3] ? r[3].trim() : '';
+    const voc  = r[5] ? r[5].trim() : '';
+    if (!type && !voc) continue;
+    records.push({ gubun: lastGubun, date: lastDate, type, num, voc });
+  }
+  return records;
+}
+
+// ═══════════════════════════════════════════════
+//  DATA (fallback — 연동 실패시 사용)
+// ═══════════════════════════════════════════════
+let RAW = [
+  {"gubun":"고객 CALL","date":"19일","type":"AI > 문의 전달 불안","num":1,"voc":"1:1 문의 AI 너무 불편하다고 함, AI고도화가 안된 것도 문제지만 AI가 어디까지 판매자에게 전달할지도 모르고 정보 누실이 우려 된다고 함, 현재 라이브하는 판매자 대다수가 1:1 문의가 온지 모르고 있다고 함, AI 기능 제거 요청"},
+  {"gubun":"고객 CALL","date":"19일","type":"상담 종료 권한 > 수정/삭제 불가","num":2,"voc":"이전 1:1문의 삭제 문의"},
+  {"gubun":"고객 CALL","date":"19일","type":"AI > 직접 소통 불가","num":3,"voc":"1:1문의 AI개편 너무 불편하다심"},
+  {"gubun":"고객 CALL","date":"19일","type":"AI > 직접 소통 불가","num":4,"voc":"1:1문의 ai답변 불만"},
+  {"gubun":"고객 CALL","date":"19일","type":"1:1 문의 방식","num":5,"voc":"1:1문의 불편하다고 불만"},
+  {"gubun":"고객 CALL","date":"20일","type":"상담 종료 권한 > 수정/삭제 불가","num":6,"voc":"1:1문의 수정 방법 문의"},
+  {"gubun":"고객 CALL","date":"20일","type":"1:1 문의 방식","num":7,"voc":"1:1 문의가 변경 된건지?"},
+  {"gubun":"고객 CALL","date":"20일","type":"AI > 직접 소통 불가","num":8,"voc":"1:1문의 삭제 불가 불만"},
+  {"gubun":"고객 CALL","date":"20일","type":"AI > 직접 소통 불가","num":9,"voc":"1:1문의 보내자 마자 ai가 상담을 자동으로 종료문의"},
+  {"gubun":"고객 CALL","date":"20일","type":"1:1 문의 방식","num":10,"voc":"기존 1:1문의를 이어갈 수 없다, 너무 불편하다"},
+  {"gubun":"고객 CALL","date":"23일","type":"1:1 문의 방식","num":11,"voc":"1:1문의 기능 관련 불만"},
+  {"gubun":"고객 CALL","date":"23일","type":"상담 종료 권한 > 수정/삭제 불가","num":12,"voc":"1:1문의 수정 및 삭제 문의"},
+  {"gubun":"고객 CALL","date":"23일","type":"상담 종료 권한 > 사용자 제어 불가","num":13,"voc":"1:1문의 남기면 내가 종료 못하나"},
+  {"gubun":"고객 CHAT","date":"19일","type":"AI > 직접 소통 불가","num":14,"voc":"AI랑 구매자랑 얘기할일이 뭐가있나요. 일대일원상태로 복구해주시고 이상한기능좀 자제해주세요ㅠ"},
+  {"gubun":"고객 CHAT","date":"20일","type":"AI > 직접 소통 불가","num":15,"voc":"일대일은 판매자랑 직접 소통하는건데 ai가 왜거기서 답을 하는건지, 판매자랑 소통이 전혀안돼요"},
+  {"gubun":"고객 CHAT","date":"20일","type":"1:1 문의 방식","num":16,"voc":"1:1 문의 이거 너무 불편해요. 구버전으로 돌려주세요"},
+  {"gubun":"고객 CHAT","date":"20일","type":"상담 종료 권한 > 수정/삭제 불가","num":17,"voc":"1:1문의 삭제 방법 문의"},
+  {"gubun":"고객 CHAT","date":"23일","type":"1:1 문의 방식","num":18,"voc":"이전 1대1 문의 미노출"},
+  {"gubun":"고객 메일","date":"19일","type":"1:1 문의 방식","num":19,"voc":"문의하기 너무 불편합니다. 구버전으로 운영해주세요. 소통이 안되잖습니까"},
+  {"gubun":"고객 메일","date":"19일","type":"AI > 직접 소통 불가","num":20,"voc":"1:1 문의 너무 불편합니다. 판매자한테 직접 하고 싶어도 AI가 중간에서 답을 해버리니까 방법도 없고, 완료된 1:1문의 예전처럼 삭제하고 싶은데 삭제도 안돼요. 업그레이드 할거면 좋은 방향으로 좋아져야지 이건 뭐 말도 안되게 불편해졌어요"},
+  {"gubun":"고객 메일","date":"19일","type":"AI > 직접 소통 불가","num":21,"voc":"업그레이드를 하면 더 좋아져야되는데... 일대일도 갑자기 AI로 바뀌고 점점 더 불편하게 변하네요"},
+  {"gubun":"고객 메일","date":"20일","type":"1:1 문의 방식","num":22,"voc":"1:1바뀐거 너무 불편해요!!! 그립 정말 좋아하고 자주 애용하는 유저인데 일대일 너무 불편해서 한마디 안할수가 없네요"},
+  {"gubun":"고객 메일","date":"20일","type":"1:1 문의 방식","num":23,"voc":"1대일 대화창 너무 불편해요"},
+  {"gubun":"고객 메일","date":"20일","type":"1:1 문의 방식","num":24,"voc":"1:1문의 개편이 너무 불편하다"},
+  {"gubun":"고객 메일","date":"20일","type":"AI > 문의 전달 불안","num":25,"voc":"1:1 문의를 보냈는데 AI가 읽은건지 판매자가 읽은건지 모르겠다"},
+  {"gubun":"고객 메일","date":"20일","type":"1:1 문의 방식","num":26,"voc":"1:1문의 개편이 너무 불편하고 이전처럼 돌아가길 원한다"},
+  {"gubun":"고객 메일","date":"20일","type":"AI > 직접 소통 불가","num":27,"voc":"AI 개입 없이 판매자와 직접 소통하고 싶다"},
+  {"gubun":"고객 메일","date":"20일","type":"1:1 문의 방식","num":28,"voc":"1:1문의 개편이 불편하다"},
+  {"gubun":"고객 메일","date":"20일","type":"상담 종료 권한 > 자동 종료 오해","num":29,"voc":"상담이 자동 종료되었다는 메시지를 받았는데 판매자가 종료한건지 자동종료인지 모르겠다"},
+  {"gubun":"고객 메일","date":"20일","type":"AI > 직접 소통 불가","num":30,"voc":"지라고 하는건데 판매자도 불편하다하고 구매자도 불편하면 그건 잘못된거아닌가요? 제발 그냥좀 놔둬주세요"},
+  {"gubun":"고객 메일","date":"20일","type":"1:1 문의 방식","num":31,"voc":"일대일답변 예전버전으로해주세요. 올려도 답변도 없고 불편합니다. 다들불편하다고하는데 왜이렇게하는지 모르겠어요"},
+  {"gubun":"고객 메일","date":"20일","type":"AI > 직접 소통 불가","num":32,"voc":"1:1 문의를 실시간으로 봐야 방송중에 바로 해결이 되는 경우들이 많은데 바로 확인할 수 없게 바꿔놓고 왜 AI가 거릅니까?"},
+  {"gubun":"고객 메일","date":"20일","type":"AI > 직접 소통 불가","num":33,"voc":"ai문의하기 좀 없애주세요. 너무 불편하고 소통이 안됩니다. 쓸모없는 기능 구버전으로 운영바랍니다."},
+  {"gubun":"판매자 CALL","date":"20일","type":"AI > AI 오안내","num":1,"voc":"1:1문의 개편되고 너무 불편, ai가 임의로 대답해버려서 고객이 오해할수 있음. 재고가 없는 상황인데 구매자분이 구매 가능 문의하면 조금만 기다려 달라 이런식으로 안내가 나감. 다시 돌릴수는 없을지 문의"},
+  {"gubun":"판매자 CALL","date":"20일","type":"AI > 직접 소통 불가","num":2,"voc":"1:1문의 AI가 모든 고객한테 친절하게 한다"},
+  {"gubun":"판매자 CALL","date":"20일","type":"1:1 문의 방식","num":3,"voc":"1:1문의 개편된거 너무 불편, pc로 비즈니스센터 유저 문의 들어가면 이전 문의건만 나오고 있고 당장 개선 요청. 개편 사항이 있으면 미리 공지를 해줘야지 당일에 공지하면 어쩌는지 불만"},
+  {"gubun":"판매자 CALL","date":"23일","type":"AI > 문의 전달 불안","num":4,"voc":"1:1문의 너무 불편하다 / AI가 이상하게 답변하고 고객도 답답해하고 판매자도 답답하다 / 원래대로 돌려달라"},
+  {"gubun":"판매자 CALL","date":"23일","type":"AI > 직접 소통 불가","num":5,"voc":"1:1문의 AI 자동 응답 끌수있도록 요청, 빠른 개선 요청"},
+  {"gubun":"판매자 CHAT","date":"19일","type":"1:1 문의 방식","num":6,"voc":"1대1 문의 확인필요에 1로 남아있어서 문의"},
+  {"gubun":"판매자 CHAT","date":"19일","type":"1:1 문의 방식","num":7,"voc":"1대1 화면이 바뀌었는데 1대1이 등록되면 알림이 안와서 불편합니다"},
+  {"gubun":"판매자 CHAT","date":"20일","type":"문의 유형/검색","num":8,"voc":"1대1 문의화면 바뀐거에서 '대기'상태의 1대1 문의글도 유저응답률에 영향 문의"},
+  {"gubun":"판매자 CHAT","date":"20일","type":"문의 유형/검색","num":9,"voc":"1:1문의 서비스점수 산정 문의"},
+  {"gubun":"판매자 CHAT","date":"20일","type":"1:1 문의 방식","num":10,"voc":"새로 변경된 1:1 시스템을 어떻게 사용하는 건지 도저희 모르겠습니다."},
+  {"gubun":"판매자 CHAT","date":"20일","type":"1:1 문의 방식","num":11,"voc":"1:1 답변하는 법"},
+  {"gubun":"판매자 CHAT","date":"20일","type":"AI > 직접 소통 불가","num":12,"voc":"고객 응대를 직접해야하는데 AI가 자꾸 답변을 해서 불편한데 AI답변 끌 수 있는지 문의"},
+  {"gubun":"판매자 CHAT","date":"20일","type":"AI > 자동 응답/개입 과도","num":13,"voc":"일대일 ai 봇 자동으로 채팅 답변을 끄고 싶습니다"},
+  {"gubun":"판매자 CHAT","date":"20일","type":"문의 유형/검색","num":14,"voc":"1:1문의 응답률 문의"},
+  {"gubun":"판매자 CHAT","date":"20일","type":"AI > AI 오안내","num":15,"voc":"일대일 ai 기능원래 대로 바꿔 주세요. 너무 불편 합니다. 고객님들도 해결 할 수 없는 문제를 ai 답변 받아서 더 답답하시답니다."},
+  {"gubun":"판매자 CHAT","date":"20일","type":"문의 유형/검색","num":16,"voc":"1:1문의 유형 문의"},
+  {"gubun":"판매자 CHAT","date":"23일","type":"AI > 자동 응답/개입 과도","num":17,"voc":"1:1 문의 자동응답 off 기능 문의"},
+  {"gubun":"판매자 CHAT","date":"23일","type":"1:1 문의 방식","num":18,"voc":"1:1 문의 구버전 문의 내역보기 클릭 시, 리스트에는 보여지고는 있으나, 클릭하면 최신글이 보여지지 않음 문의"},
+  {"gubun":"판매자 CHAT","date":"23일","type":"1:1 문의 방식","num":19,"voc":"1대1문의가 너무 불편하게 바꼈는데, 다시 원래대로 복구는 안되나요?"}
+];
+
+// ═══════════════════════════════════════════════
+//  FETCH DATA FROM GOOGLE SHEETS
+// ═══════════════════════════════════════════════
+async function fetchData() {
+  const btn  = document.getElementById('refresh-btn');
+  const bar  = document.getElementById('status-bar');
+  const sub  = document.getElementById('header-subtitle');
+
+  btn.disabled = true;
+  btn.classList.add('spinning');
+  bar.className = 'status-bar visible';
+  bar.textContent = '⏳ 스프레드시트에서 최신 데이터를 불러오는 중...';
+
+  try {
+    const res = await fetch(CSV_URL, { cache: 'no-store' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const text = await res.text();
+    const parsed = csvToRecords(text);
+    if (parsed.length === 0) throw new Error('데이터가 비어있습니다');
+
+    RAW = parsed;
+    const now = new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' });
+    sub.textContent = `마지막 업데이트: ${now}`;
+    bar.className = 'status-bar';
+    activeFilter = 'all';
+    activeType = null;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    document.querySelector('.filter-btn[data-filter="all"]').classList.add('active');
+    render();
+  } catch (e) {
+    bar.className = 'status-bar error visible';
+    bar.textContent = `⚠️ 데이터 로드 실패: ${e.message} — 기존 데이터를 표시합니다.`;
+    render();
+  } finally {
+    btn.disabled = false;
+    btn.classList.remove('spinning');
+  }
+}
+
+// ═══════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════
+let activeFilter = 'all';
+let activeType   = null;
+
+// ═══════════════════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════════════════
+function filteredByGubun() {
+  if (activeFilter === 'all') return RAW;
+  return RAW.filter(r => r.gubun === activeFilter);
+}
+
+function finalFiltered() {
+  let data = filteredByGubun();
+  if (activeType) data = data.filter(r => r.type === activeType);
+  return data;
+}
+
+function isCustomer(r) { return r.gubun.startsWith('고객'); }
+
+// ═══════════════════════════════════════════════
+//  RENDER: Summary cards
+// ═══════════════════════════════════════════════
+function renderSummary() {
+  const base = filteredByGubun();
+  const cust = base.filter(isCustomer).length;
+  const sell = base.filter(r => !isCustomer(r)).length;
+  document.getElementById('total-count').textContent    = base.length;
+  document.getElementById('customer-count').textContent = cust;
+  document.getElementById('seller-count').textContent   = sell;
+}
+
+// ═══════════════════════════════════════════════
+//  RENDER: Type list (left panel)
+// ═══════════════════════════════════════════════
+function renderTypeList() {
+  const base = filteredByGubun();
+  const counts = {};
+  base.forEach(r => { counts[r.type] = (counts[r.type] || 0) + 1; });
+  const maxCount = Math.max(...Object.values(counts), 1);
+  const types = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+
+  document.getElementById('type-badge').textContent =
+    activeFilter === 'all' ? '전체' : activeFilter;
+
+  const container = document.getElementById('type-list');
+  container.innerHTML = '';
+
+  const allRow = document.createElement('div');
+  allRow.className = 'type-row' + (activeType === null ? ' active' : '');
+  allRow.innerHTML = `
+    <div class="type-bar-wrap">
+      <div class="type-name">📋 전체 보기</div>
+      <div class="bar-track"><div class="bar-fill" style="width:100%"></div></div>
+    </div>
+    <div class="type-count">${base.length}</div>
+  `;
+  allRow.addEventListener('click', () => { activeType = null; render(); });
+  container.appendChild(allRow);
+
+  types.forEach(([type, count]) => {
+    const pct = Math.round((count / maxCount) * 100);
+    const row = document.createElement('div');
+    row.className = 'type-row' + (activeType === type ? ' active' : '');
+    row.innerHTML = `
+      <div class="type-bar-wrap">
+        <div class="type-name" title="${type}">${type}</div>
+        <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
+      </div>
+      <div class="type-count">${count}</div>
+    `;
+    row.addEventListener('click', () => {
+      activeType = (activeType === type) ? null : type;
+      render();
+    });
+    container.appendChild(row);
+  });
+}
+
+// ═══════════════════════════════════════════════
+//  RENDER: VOC list (right panel)
+// ═══════════════════════════════════════════════
+function renderVocList() {
+  const data = finalFiltered();
+  const title = activeType
+    ? activeType
+    : (activeFilter === 'all' ? '전체 VOC 목록' : activeFilter + ' 목록');
+
+  document.getElementById('voc-panel-title').textContent = title;
+  document.getElementById('voc-panel-count').textContent = data.length + '건';
+
+  const container = document.getElementById('voc-list');
+  container.innerHTML = '';
+
+  if (data.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="icon">🔍</div>
+        <p>해당하는 VOC가 없습니다</p>
+      </div>`;
+    return;
+  }
+
+  data.forEach((r) => {
+    const isCustomerItem = isCustomer(r);
+    const tagClass = isCustomerItem ? 'tag-gubun-customer' : 'tag-gubun-seller';
+    const cleanVoc = r.voc.replace(/<br\s*\/?>/gi, ' ').replace(/\s+/g, ' ').trim();
+
+    const item = document.createElement('div');
+    item.className = 'voc-item';
+    item.innerHTML = `
+      <div class="voc-meta">
+        <span class="tag ${tagClass}">${r.gubun}</span>
+        <span class="tag tag-date">${r.date}</span>
+        <span class="tag">${r.type}</span>
+        <span class="tag-num">#${r.num}</span>
+      </div>
+      <div class="voc-content">${cleanVoc}</div>
+    `;
+    item.addEventListener('click', () => item.classList.toggle('expanded'));
+    container.appendChild(item);
+  });
+}
+
+// ═══════════════════════════════════════════════
+//  RENDER: All
+// ═══════════════════════════════════════════════
+function render() {
+  renderSummary();
+  renderTypeList();
+  renderVocList();
+}
+
+// ═══════════════════════════════════════════════
+//  EVENTS: Filter buttons
+// ═══════════════════════════════════════════════
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeFilter = btn.dataset.filter;
+    activeType = null;
+    render();
+  });
+});
+
+// ═══════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════
+fetchData();
+</script>
+</body>
 </html>
